@@ -1,0 +1,86 @@
+version: '3'
+
+networks:
+  kafka-network:
+    name: kafka-network
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.18.0.0/16
+
+services:
+
+  kafka-zookeeper:
+    image: kafka-zookeeper
+    build:
+      context: ./server
+      dockerfile: server.Dockerfile
+    container_name: kafka-zookeeper
+    networks:
+      kafka-network:
+        ipv4_address: 172.18.0.2
+    volumes:
+      - ./.data-zookeeper:/workdir/data
+    command: ["sh", "-c", "bin/zookeeper-server-start.sh config/zookeeper.properties"]
+    ports:
+      - 2888:2888
+    restart: always
+
+  kafka-server:
+    image: kafka-server
+    build:
+      context: ./server
+      dockerfile: server.Dockerfile
+    container_name: kafka-server
+    depends_on:
+      - kafka-zookeeper
+    networks:
+      kafka-network:
+        ipv4_address: 172.18.0.3
+    volumes:
+      - ./.data-server:/workdir/data
+    command: ["sh", "-c", "bin/kafka-server-start.sh config/server.properties"]
+    ports:
+      - 9092:9092
+    restart: always
+
+  topic-create:
+    image: topic-create
+    build:
+      context: ./server
+      dockerfile: server.Dockerfile
+    container_name: topic-create
+    depends_on:
+      - kafka-server
+    networks:
+      kafka-network:
+        ipv4_address: 172.18.0.4
+    command: ["sh", "-c", "bin/kafka-topics.sh --create --topic test-topic --bootstrap-server 172.18.0.3:9092"]
+    restart: 'no'
+
+  kafka-producer:
+    image: kafka-producer
+    build:
+      context: ./producer
+      dockerfile: producer.Dockerfile
+    container_name: kafka-producer
+    depends_on:
+      - kafka-server
+    networks:
+      kafka-network:
+        ipv4_address: 172.18.0.12
+    restart: 'no'
+
+  kafka-consumer:
+    image: kafka-consumer
+    build:
+      context: ./consumer
+      dockerfile: consumer.Dockerfile
+    container_name: kafka-consumer
+    depends_on:
+      - kafka-server
+    networks:
+      kafka-network:
+        ipv4_address: 172.18.0.13
+    restart: 'no'

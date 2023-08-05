@@ -1,0 +1,4 @@
+subnet:			172.18.0.0/16
+zookeeper-ip:		172.18.0.2:2888
+boostrap-server:	172.18.0.3:9092
+topic:			kafka-test-topic
