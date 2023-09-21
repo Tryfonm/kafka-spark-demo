@@ -1,7 +1,7 @@
 from kafka import KafkaProducer
 
 TOPIC_NAME = "test-topic"
-BOOTSTRAP_SERVERS = "172.18.0.3:9092"
+BOOTSTRAP_SERVERS = "172.19.0.3:9092"
 
 
 def main() -> None:
